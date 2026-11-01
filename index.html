@@ -4,372 +4,292 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>purity</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;600&display=swap');
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
         body, html {
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background-color: #050508;
-            font-family: 'Fira Code', monospace;
-            color: #fff;
+            width: 100%; height: 100%; overflow: hidden;
+            background-color: #000; color: #fff;
+            font-family: 'Inter', system-ui, sans-serif;
             user-select: none;
         }
 
-        /* Falling Lines Background */
-        #bg-canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 1;
+        /* --- 1. MP4 Background Video --- */
+        #bg-video {
+            position: absolute; top: 50%; left: 50%;
+            min-width: 100%; min-height: 100%;
+            width: auto; height: auto;
+            transform: translate(-50%, -50%);
+            z-index: 1; object-fit: cover;
+            opacity: 0.9;
         }
 
-        /* Enter Screen */
+        /* --- 2. Enter Screen --- */
         #enter-screen {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background-color: #000;
-            z-index: 10;
-            cursor: pointer;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; justify-content: center; align-items: center;
+            background-color: #000; z-index: 10; cursor: pointer;
             transition: opacity 1.5s ease-in-out;
         }
-
         #enter-screen h1 {
-            font-weight: 300;
-            letter-spacing: 1.5rem;
-            color: #666;
-            font-size: 1.2rem;
-            text-transform: lowercase;
-            animation: pulse 3s infinite;
+            font-family: monospace; font-weight: 300; letter-spacing: 1.5rem;
+            color: #666; font-size: 1.2rem; text-transform: lowercase;
+            animation: pulse 3s infinite; margin-left: 1.5rem; /* Offset for letter-spacing */
         }
+        @keyframes pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; color: #fff; } }
 
-        @keyframes pulse {
-            0%, 100% { opacity: 0.3; }
-            50% { opacity: 1; color: #fff; }
-        }
-
-        /* Main Content (Profile) */
+        /* --- 3. Main Content Area --- */
         #main-content {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 5;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 2s ease-in-out;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; justify-content: center; align-items: center; z-index: 5;
+            opacity: 0; pointer-events: none; transition: opacity 1.5s ease-in-out;
+            padding: 20px;
         }
+        #main-content.show { opacity: 1; pointer-events: auto; }
 
-        .profile-card {
-            background: rgba(10, 10, 15, 0.7);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(100, 200, 255, 0.2);
-            border-radius: 16px;
-            padding: 40px;
+        /* --- 4. Clean Floating Layout --- */
+        .cx-container {
             display: flex;
             flex-direction: column;
             align-items: center;
-            box-shadow: 0 0 40px rgba(0, 0, 0, 0.8), 0 0 20px rgba(100, 200, 255, 0.05);
-            transform: translateY(20px);
-            transition: transform 2s ease-in-out;
-        }
-
-        #main-content.show {
-            opacity: 1;
-            pointer-events: auto;
-        }
-
-        #main-content.show .profile-card {
-            transform: translateY(0);
-        }
-
-        .avatar-container {
-            position: relative;
-            width: 120px;
-            height: 120px;
-            margin-bottom: 20px;
-        }
-
-        .avatar {
             width: 100%;
-            height: 100%;
-            border-radius: 50%;
+            max-width: 380px;
+            filter: drop-shadow(0px 4px 12px rgba(0, 0, 0, 0.8));
+            transform: translateY(30px) scale(0.95);
+            transition: transform 1.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        #main-content.show .cx-container {
+            transform: translateY(0) scale(1);
+        }
+
+        /* Avatar */
+        .cx-avatar-wrap { 
+            position: relative; 
+            margin-bottom: 1rem; 
+        }
+        .cx-avatar {
+            width: 110px; 
+            height: 110px; 
+            border-radius: 50%; 
             object-fit: cover;
-            border: 2px solid rgba(100, 200, 255, 0.5);
-            box-shadow: 0 0 15px rgba(100, 200, 255, 0.3);
-            position: relative;
-            z-index: 2;
+            border: 2px solid rgba(255, 255, 255, 0.8); 
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
         }
 
-        .status-dot {
-            position: absolute;
-            bottom: 5px;
-            right: 5px;
-            width: 20px;
-            height: 20px;
-            background-color: #23a559; /* Online green */
-            border: 3px solid #0a0a0f;
-            border-radius: 50%;
-            z-index: 3;
-            box-shadow: 0 0 10px rgba(35, 165, 89, 0.6);
+        /* Text */
+        .cx-name { 
+            font-size: 1.7rem; 
+            font-weight: 800; 
+            letter-spacing: -0.02em; 
+            color: #fff; 
+            text-shadow: 0 2px 10px rgba(0,0,0,0.8); 
+        }
+        .cx-username { 
+            font-size: 1rem; 
+            font-weight: 500; 
+            color: rgba(255, 255, 255, 0.8); 
+            margin-top: 0.2rem;
+            margin-bottom: 2rem;
+            text-shadow: 0 2px 5px rgba(0,0,0,0.8); 
         }
 
-        .display-name {
-            font-size: 1.8rem;
-            font-weight: 600;
-            color: #fff;
-            margin-bottom: 5px;
-            text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+        /* Music Panel */
+        .cx-panel {
+            width: 100%;
+            background: rgba(15, 15, 20, 0.5); 
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px; 
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            padding: 1rem 1.1rem 0.95rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
 
-        .username {
-            font-size: 1rem;
-            color: #888;
-            margin-bottom: 25px;
+        /* Music Widget Layout */
+        .cx-now { display: flex; align-items: center; gap: 0.8rem; margin-bottom: 0.8rem; }
+        
+        /* Equalizer Bars */
+        .cx-eq { display: flex; align-items: flex-end; gap: 3px; height: 22px; flex-shrink: 0; }
+        .cx-eq i { width: 3.5px; border-radius: 2px; background: #fff; animation: cxEq 1s ease-in-out infinite; opacity: 0.85; }
+        .cx-eq i:nth-child(1) { height: 45%; animation-delay: 0s; }
+        .cx-eq i:nth-child(2) { height: 100%; animation-delay: 0.15s; }
+        .cx-eq i:nth-child(3) { height: 65%; animation-delay: 0.3s; }
+        .cx-eq i:nth-child(4) { height: 85%; animation-delay: 0.45s; }
+        .cx-eq i:nth-child(5) { height: 50%; animation-delay: 0.6s; }
+        @keyframes cxEq { 0%, 100% { transform: scaleY(0.4); } 50% { transform: scaleY(1); } }
+        
+        .cx-minfo { flex: 1; min-width: 0; }
+        .cx-tname { font-size: 0.95rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .cx-tartist { font-size: 0.8rem; color: rgba(255, 255, 255, 0.6); margin-top: 2px; }
+        
+        /* Progress Bar */
+        .cx-prog { height: 4px; background: rgba(255, 255, 255, 0.15); border-radius: 99px; cursor: pointer; position: relative; margin-top: 4px; }
+        .cx-prog-fill { height: 100%; background: #fff; border-radius: 99px; width: 0%; pointer-events: none; position: relative; }
+        .cx-prog-fill::after {
+            content: ''; position: absolute; right: -4px; top: -3px; width: 10px; height: 10px;
+            background: #fff; border-radius: 50%; opacity: 0; transition: opacity 0.2s;
         }
+        .cx-prog:hover .cx-prog-fill::after { opacity: 1; }
+        
+        .cx-times { display: flex; justify-content: space-between; font-size: 0.65rem; font-weight: 500; color: rgba(255, 255, 255, 0.5); margin-top: 8px; font-variant-numeric: tabular-nums; }
 
-        .bio {
-            font-size: 0.85rem;
-            color: #aaa;
-            text-align: center;
-            max-width: 300px;
-            line-height: 1.5;
-            border-top: 1px solid rgba(255,255,255,0.1);
-            padding-top: 15px;
+        /* Volume Slider */
+        .cx-vol-row { display: flex; align-items: center; gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.05); }
+        .cx-vol-row svg { opacity: 0.5; width: 14px; height: 14px; flex-shrink: 0; }
+        .cx-vol-slider {
+            flex: 1; -webkit-appearance: none; appearance: none; height: 3px; 
+            background: rgba(255,255,255,0.2); border-radius: 99px; outline: none; cursor: pointer;
         }
-
-        /* Hidden YT Player */
-        #yt-player {
-            position: absolute;
-            top: -9999px;
-            left: -9999px;
-            width: 1px;
-            height: 1px;
-            opacity: 0;
-            pointer-events: none;
+        .cx-vol-slider::-webkit-slider-thumb {
+            -webkit-appearance: none; appearance: none; width: 10px; height: 10px; 
+            border-radius: 50%; background: #fff; cursor: pointer;
         }
     </style>
 </head>
 <body>
 
-    <!-- Black Screen Enter -->
     <div id="enter-screen">
-        <h1>enter</h1>
+        <h1>click</h1>
     </div>
 
-    <!-- Falling Lines Canvas -->
-    <canvas id="bg-canvas"></canvas>
-
-    <!-- Hidden YouTube Player for Music -->
-    <div id="yt-player">
-        <iframe id="yt-iframe" width="1" height="1" src="" frameborder="0" allow="autoplay; encrypted-media"></iframe>
-    </div>
+    <!-- Background Video & Audio Source -->
+    <video id="bg-video" autoplay loop muted playsinline>
+        <source src="https://files.catbox.moe/e931ms.mp4" type="video/mp4">
+    </video>
 
     <!-- Profile Content -->
     <div id="main-content">
-        <div class="profile-card">
-            <div class="avatar-container">
-                <img src="" alt="Avatar" class="avatar" id="discord-avatar">
-                <div class="status-dot"></div>
+        <div class="cx-container">
+            
+            <div class="cx-avatar-wrap">
+                <img src="" alt="Avatar" class="cx-avatar" id="discord-avatar">
             </div>
-            <div class="display-name" id="discord-display">Loading...</div>
-            <div class="username" id="discord-username">@loading</div>
-            <div class="bio" id="discord-bio">synchronizing with discord api...</div>
+            
+            <div class="cx-name" id="discord-display">Loading...</div>
+            <div class="cx-username" id="discord-username">@loading</div>
+
+            <!-- Floating Music Widget -->
+            <div class="cx-panel">
+                <div class="cx-now">
+                    <div class="cx-eq" id="eq-bars"><i></i><i></i><i></i><i></i><i></i></div>
+                    <div class="cx-minfo">
+                        <div class="cx-tname">insta</div>
+                        <div class="cx-tartist">luvfredo</div>
+                    </div>
+                </div>
+                <div class="cx-prog" id="cx-prog">
+                    <div class="cx-prog-fill" id="cx-prog-fill"></div>
+                </div>
+                <div class="cx-times">
+                    <span id="cx-t-cur">0:00</span>
+                    <span id="cx-t-tot">0:00</span>
+                </div>
+                
+                <!-- Volume Control -->
+                <div class="cx-vol-row">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                    <input type="range" id="cx-vol" class="cx-vol-slider" min="0" max="1" step="0.01" value="0.3">
+                </div>
+            </div>
+
         </div>
     </div>
 
     <script>
-        // --- 1. Falling Lines Animation ---
-        const canvas = document.getElementById('bg-canvas');
-        const ctx = canvas.getContext('2d');
+        // --- 1. Video & Audio Logic ---
+        const bgVideo = document.getElementById('bg-video');
+        const pFill = document.getElementById('cx-prog-fill');
+        const pBar = document.getElementById('cx-prog');
+        const tCur = document.getElementById('cx-t-cur');
+        const tTot = document.getElementById('cx-t-tot');
+        const volSlider = document.getElementById('cx-vol');
 
-        let width, height;
-        function resize() {
-            width = canvas.width = window.innerWidth;
-            height = canvas.height = window.innerHeight;
-        }
-        window.addEventListener('resize', resize);
-        resize();
-
-        const glyphs = "│┃╎╏┆┇┊┋¦⸽|·/\\".split("");
-        const columns = Math.floor(width / 20); 
-        const streams = [];
-        
-        // Colors mimicking the terminal style
-        const colors = [
-            'rgba(190, 230, 255, 0.8)', // Bright head
-            'rgba(120, 180, 230, 0.6)',
-            'rgba(80, 120, 170, 0.4)',
-            'rgba(55, 80, 120, 0.2)',
-            'rgba(35, 50, 75, 0.1)'     // Faint tail
-        ];
-
-        class Stream {
-            constructor() {
-                this.x = Math.floor(Math.random() * (width / 20)) * 20;
-                this.y = Math.random() * -height;
-                this.speed = Math.random() * 3 + 1;
-                this.length = Math.floor(Math.random() * 15) + 5;
-                this.glyph = glyphs[Math.floor(Math.random() * glyphs.length)];
-                this.fontSize = 14 + Math.random() * 4;
-            }
-            
-            update() {
-                this.y += this.speed;
-                if (this.y - (this.length * this.fontSize) > height) {
-                    this.y = Math.random() * -200;
-                    this.x = Math.floor(Math.random() * (width / 20)) * 20;
-                    this.speed = Math.random() * 3 + 1;
-                    this.glyph = glyphs[Math.floor(Math.random() * glyphs.length)];
-                }
-            }
-            
-            draw() {
-                for (let i = 0; i < this.length; i++) {
-                    let yPos = this.y - (i * this.fontSize);
-                    if (yPos < 0 || yPos > height) continue;
-                    
-                    let colorIndex = Math.min(Math.floor(i / (this.length / colors.length)), colors.length - 1);
-                    ctx.fillStyle = colors[colorIndex];
-                    ctx.font = `${this.fontSize}px 'Fira Code', monospace`;
-                    // Add slight opacity variation
-                    ctx.fillText(this.glyph, this.x, yPos);
-                }
-            }
+        function formatTime(s) { 
+            if (!s || isNaN(s)) return '0:00';
+            return Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0'); 
         }
 
-        // Initialize streams
-        for (let i = 0; i < width / 15; i++) {
-            streams.push(new Stream());
-        }
+        // Sync UI with Video playback
+        bgVideo.addEventListener('timeupdate', () => {
+            if (!bgVideo.duration) return;
+            pFill.style.width = (bgVideo.currentTime / bgVideo.duration * 100) + '%';
+            tCur.textContent = formatTime(bgVideo.currentTime);
+            tTot.textContent = formatTime(bgVideo.duration);
+        });
 
-        function animate() {
-            // Fade out effect for trails
-            ctx.fillStyle = 'rgba(5, 5, 8, 0.2)';
-            ctx.fillRect(0, 0, width, height);
-            
-            streams.forEach(stream => {
-                stream.update();
-                stream.draw();
-            });
-            
-            requestAnimationFrame(animate);
-        }
-        animate();
+        // Scrub timeline
+        pBar.addEventListener('click', (e) => {
+            const rect = pBar.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const percent = clickX / rect.width;
+            if (bgVideo.duration) bgVideo.currentTime = percent * bgVideo.duration;
+        });
 
-        // --- 2. YouTube Audio Logic ---
-        // Using an invisible iframe with YouTube API parameters
-        const ytIframe = document.getElementById('yt-iframe');
-        const videoId = 'ihh_k20GKFc';
-        
-        function playMusic() {
-            // loop=1, playlist=videoId forces the loop. autoplay=1 starts it.
-            // origin is required for some browsers.
-            ytIframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&loop=1&playlist=${videoId}&controls=0&showinfo=0&autohide=1&mute=0`;
-        }
+        // Volume Control
+        volSlider.addEventListener('input', (e) => {
+            bgVideo.volume = e.target.value;
+        });
 
-        // --- 3. Click to Enter Logic ---
+        // --- 2. Enter Screen Logic ---
         const enterScreen = document.getElementById('enter-screen');
         const mainContent = document.getElementById('main-content');
         
         enterScreen.addEventListener('click', () => {
-            // Start Music
-            playMusic();
+            // Unmute and start playing
+            bgVideo.muted = false;
+            bgVideo.volume = 0.3; 
+            bgVideo.play(); 
 
-            // Fade out enter screen
+            // Fade transitions
             enterScreen.style.opacity = '0';
-            setTimeout(() => {
-                enterScreen.style.display = 'none';
-            }, 1500);
-
-            // Fade in profile
+            setTimeout(() => { enterScreen.style.display = 'none'; }, 1500);
             mainContent.classList.add('show');
         });
 
-        // --- 4. Discord API Lookup ---
+        // --- 3. Discord API Lookup (Jockie API) ---
         const DISCORD_ID = '450333843354812427';
-        const DISCORD_API = `https://discord.com/api/v10/users/${DISCORD_ID}`;
-        // Note: Standard API calls without a Bot token return limited public info.
-        // Lanyard API is a popular public alternative for presence + full public data.
-        const LANYARD_API = `https://api.lanyard.rest/v1/users/${DISCORD_ID}`;
+        const API_URL = `https://japi.rest/discord/v1/user/${DISCORD_ID}`;
+        
+        let lastDataHash = "";
 
         async function fetchDiscordProfile() {
             try {
-                // We use Lanyard for a richer profile (Banners, Bio, custom avatars) 
-                // because the standard API without auth limits data heavily.
-                const response = await fetch(LANYARD_API);
-                const data = await response.json();
+                const response = await fetch(API_URL);
+                const json = await response.json();
 
-                if (data.success) {
-                    const discordUser = data.data.discord_user;
+                if (json.data) {
+                    const user = json.data;
                     
-                    // Set Display Name (Global Name or Username fallback)
-                    const displayName = discordUser.global_name || discordUser.username;
-                    document.getElementById('discord-display').textContent = displayName;
-                    
-                    // Set Username
-                    document.getElementById('discord-username').textContent = `@${discordUser.username}`;
+                    // Hash check to prevent visual glitching
+                    const currentHash = JSON.stringify({ d: user.global_name, u: user.username, a: user.avatar });
+                    if (currentHash === lastDataHash) return;
+                    lastDataHash = currentHash;
+
+                    // Set Display Name & Username
+                    document.getElementById('discord-display').textContent = user.global_name || user.username;
+                    document.getElementById('discord-username').textContent = `@${user.username}`;
 
                     // Set Avatar
                     let avatarUrl = "";
-                    if (discordUser.avatar) {
-                        const format = discordUser.avatar.startsWith('a_') ? 'gif' : 'png';
-                        avatarUrl = `https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.${format}?size=256`;
+                    if (user.avatar) {
+                        const format = user.avatar.startsWith('a_') ? 'gif' : 'png';
+                        avatarUrl = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.${format}?size=256`;
                     } else {
-                        // Default avatar
-                        const defaultIndex = (BigInt(discordUser.id) >> 22n) % 6n;
+                        const defaultIndex = (BigInt(user.id) >> 22n) % 6n;
                         avatarUrl = `https://cdn.discordapp.com/embed/avatars/${defaultIndex}.png`;
                     }
                     document.getElementById('discord-avatar').src = avatarUrl;
-
-                    // Set Bio (Lanyard provides this sometimes, otherwise fallback)
-                    // For the bio, we usually need the raw profile, but Lanyard provides basic info.
-                    document.getElementById('discord-bio').textContent = data.data.activities.length > 0 
-                        ? `Playing: ${data.data.activities[0].name}` 
-                        : "currently existing...";
-
-                } else {
-                    // Fallback to standard API if Lanyard fails
-                    const stdResponse = await fetch(DISCORD_API);
-                    const stdData = await stdResponse.json();
-                    
-                    document.getElementById('discord-display').textContent = stdData.global_name || stdData.username;
-                    document.getElementById('discord-username').textContent = `@${stdData.username}`;
-                    
-                    if (stdData.avatar) {
-                        const format = stdData.avatar.startsWith('a_') ? 'gif' : 'png';
-                        document.getElementById('discord-avatar').src = `https://cdn.discordapp.com/avatars/${stdData.id}/${stdData.avatar}.${format}?size=256`;
-                    }
-                    document.getElementById('discord-bio').textContent = "public profile synchronized.";
                 }
             } catch (error) {
-                console.error("Error fetching Discord profile:", error);
-                document.getElementById('discord-display').textContent = "User Not Found";
-                document.getElementById('discord-bio').textContent = "failed to connect to discord api.";
+                // Ignore polling errors
             }
         }
 
-        // Fetch profile immediately on load (so it's ready when they click enter)
+        // Fetch instantly and set loop (1 second)
         fetchDiscordProfile();
+        setInterval(fetchDiscordProfile, 1000);
     </script>
 </body>
 </html>
