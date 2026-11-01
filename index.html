@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>purity</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;600&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #050508;
+            font-family: 'Fira Code', monospace;
+            color: #fff;
+            user-select: none;
+        }
+
+        /* Falling Lines Background */
+        #bg-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        /* Enter Screen */
+        #enter-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #000;
+            z-index: 10;
+            cursor: pointer;
+            transition: opacity 1.5s ease-in-out;
+        }
+
+        #enter-screen h1 {
+            font-weight: 300;
+            letter-spacing: 1.5rem;
+            color: #666;
+            font-size: 1.2rem;
+            text-transform: lowercase;
+            animation: pulse 3s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; color: #fff; }
+        }
+
+        /* Main Content (Profile) */
+        #main-content {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 5;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 2s ease-in-out;
+        }
+
+        .profile-card {
+            background: rgba(10, 10, 15, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(100, 200, 255, 0.2);
+            border-radius: 16px;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.8), 0 0 20px rgba(100, 200, 255, 0.05);
+            transform: translateY(20px);
+            transition: transform 2s ease-in-out;
+        }
+
+        #main-content.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        #main-content.show .profile-card {
+            transform: translateY(0);
+        }
+
+        .avatar-container {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            margin-bottom: 20px;
+        }
+
+        .avatar {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid rgba(100, 200, 255, 0.5);
+            box-shadow: 0 0 15px rgba(100, 200, 255, 0.3);
+            position: relative;
+            z-index: 2;
+        }
+
+        .status-dot {
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+            width: 20px;
+            height: 20px;
+            background-color: #23a559; /* Online green */
+            border: 3px solid #0a0a0f;
+            border-radius: 50%;
+            z-index: 3;
+            box-shadow: 0 0 10px rgba(35, 165, 89, 0.6);
+        }
+
+        .display-name {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 5px;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+        }
+
+        .username {
+            font-size: 1rem;
+            color: #888;
+            margin-bottom: 25px;
+        }
+
+        .bio {
+            font-size: 0.85rem;
+            color: #aaa;
+            text-align: center;
+            max-width: 300px;
+            line-height: 1.5;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            padding-top: 15px;
+        }
+
+        /* Hidden YT Player */
+        #yt-player {
+            position: absolute;
+            top: -9999px;
+            left: -9999px;
+            width: 1px;
+            height: 1px;
+            opacity: 0;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Black Screen Enter -->
+    <div id="enter-screen">
+        <h1>enter</h1>
+    </div>
+
+    <!-- Falling Lines Canvas -->
+    <canvas id="bg-canvas"></canvas>
+
+    <!-- Hidden YouTube Player for Music -->
+    <div id="yt-player">
+        <iframe id="yt-iframe" width="1" height="1" src="" frameborder="0" allow="autoplay; encrypted-media"></iframe>
+    </div>
+
+    <!-- Profile Content -->
+    <div id="main-content">
+        <div class="profile-card">
+            <div class="avatar-container">
+                <img src="" alt="Avatar" class="avatar" id="discord-avatar">
+                <div class="status-dot"></div>
+            </div>
+            <div class="display-name" id="discord-display">Loading...</div>
+            <div class="username" id="discord-username">@loading</div>
+            <div class="bio" id="discord-bio">synchronizing with discord api...</div>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. Falling Lines Animation ---
+        const canvas = document.getElementById('bg-canvas');
+        const ctx = canvas.getContext('2d');
+
+        let width, height;
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        const glyphs = "│┃╎╏┆┇┊┋¦⸽|·/\\".split("");
+        const columns = Math.floor(width / 20); 
+        const streams = [];
+        
+        // Colors mimicking the terminal style
+        const colors = [
+            'rgba(190, 230, 255, 0.8)', // Bright head
+            'rgba(120, 180, 230, 0.6)',
+            'rgba(80, 120, 170, 0.4)',
+            'rgba(55, 80, 120, 0.2)',
+            'rgba(35, 50, 75, 0.1)'     // Faint tail
+        ];
+
+        class Stream {
+            constructor() {
+                this.x = Math.floor(Math.random() * (width / 20)) * 20;
+                this.y = Math.random() * -height;
+                this.speed = Math.random() * 3 + 1;
+                this.length = Math.floor(Math.random() * 15) + 5;
+                this.glyph = glyphs[Math.floor(Math.random() * glyphs.length)];
+                this.fontSize = 14 + Math.random() * 4;
+            }
+            
+            update() {
+                this.y += this.speed;
+                if (this.y - (this.length * this.fontSize) > height) {
+                    this.y = Math.random() * -200;
+                    this.x = Math.floor(Math.random() * (width / 20)) * 20;
+                    this.speed = Math.random() * 3 + 1;
+                    this.glyph = glyphs[Math.floor(Math.random() * glyphs.length)];
+                }
+            }
+            
+            draw() {
+                for (let i = 0; i < this.length; i++) {
+                    let yPos = this.y - (i * this.fontSize);
+                    if (yPos < 0 || yPos > height) continue;
+                    
+                    let colorIndex = Math.min(Math.floor(i / (this.length / colors.length)), colors.length - 1);
+                    ctx.fillStyle = colors[colorIndex];
+                    ctx.font = `${this.fontSize}px 'Fira Code', monospace`;
+                    // Add slight opacity variation
+                    ctx.fillText(this.glyph, this.x, yPos);
+                }
+            }
+        }
+
+        // Initialize streams
+        for (let i = 0; i < width / 15; i++) {
+            streams.push(new Stream());
+        }
+
+        function animate() {
+            // Fade out effect for trails
+            ctx.fillStyle = 'rgba(5, 5, 8, 0.2)';
+            ctx.fillRect(0, 0, width, height);
+            
+            streams.forEach(stream => {
+                stream.update();
+                stream.draw();
+            });
+            
+            requestAnimationFrame(animate);
+        }
+        animate();
+
+        // --- 2. YouTube Audio Logic ---
+        // Using an invisible iframe with YouTube API parameters
+        const ytIframe = document.getElementById('yt-iframe');
+        const videoId = 'ihh_k20GKFc';
+        
+        function playMusic() {
+            // loop=1, playlist=videoId forces the loop. autoplay=1 starts it.
+            // origin is required for some browsers.
+            ytIframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&loop=1&playlist=${videoId}&controls=0&showinfo=0&autohide=1&mute=0`;
+        }
+
+        // --- 3. Click to Enter Logic ---
+        const enterScreen = document.getElementById('enter-screen');
+        const mainContent = document.getElementById('main-content');
+        
+        enterScreen.addEventListener('click', () => {
+            // Start Music
+            playMusic();
+
+            // Fade out enter screen
+            enterScreen.style.opacity = '0';
+            setTimeout(() => {
+                enterScreen.style.display = 'none';
+            }, 1500);
+
+            // Fade in profile
+            mainContent.classList.add('show');
+        });
+
+        // --- 4. Discord API Lookup ---
+        const DISCORD_ID = '450333843354812427';
+        const DISCORD_API = `https://discord.com/api/v10/users/${DISCORD_ID}`;
+        // Note: Standard API calls without a Bot token return limited public info.
+        // Lanyard API is a popular public alternative for presence + full public data.
+        const LANYARD_API = `https://api.lanyard.rest/v1/users/${DISCORD_ID}`;
+
+        async function fetchDiscordProfile() {
+            try {
+                // We use Lanyard for a richer profile (Banners, Bio, custom avatars) 
+                // because the standard API without auth limits data heavily.
+                const response = await fetch(LANYARD_API);
+                const data = await response.json();
+
+                if (data.success) {
+                    const discordUser = data.data.discord_user;
+                    
+                    // Set Display Name (Global Name or Username fallback)
+                    const displayName = discordUser.global_name || discordUser.username;
+                    document.getElementById('discord-display').textContent = displayName;
+                    
+                    // Set Username
+                    document.getElementById('discord-username').textContent = `@${discordUser.username}`;
+
+                    // Set Avatar
+                    let avatarUrl = "";
+                    if (discordUser.avatar) {
+                        const format = discordUser.avatar.startsWith('a_') ? 'gif' : 'png';
+                        avatarUrl = `https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.${format}?size=256`;
+                    } else {
+                        // Default avatar
+                        const defaultIndex = (BigInt(discordUser.id) >> 22n) % 6n;
+                        avatarUrl = `https://cdn.discordapp.com/embed/avatars/${defaultIndex}.png`;
+                    }
+                    document.getElementById('discord-avatar').src = avatarUrl;
+
+                    // Set Bio (Lanyard provides this sometimes, otherwise fallback)
+                    // For the bio, we usually need the raw profile, but Lanyard provides basic info.
+                    document.getElementById('discord-bio').textContent = data.data.activities.length > 0 
+                        ? `Playing: ${data.data.activities[0].name}` 
+                        : "currently existing...";
+
+                } else {
+                    // Fallback to standard API if Lanyard fails
+                    const stdResponse = await fetch(DISCORD_API);
+                    const stdData = await stdResponse.json();
+                    
+                    document.getElementById('discord-display').textContent = stdData.global_name || stdData.username;
+                    document.getElementById('discord-username').textContent = `@${stdData.username}`;
+                    
+                    if (stdData.avatar) {
+                        const format = stdData.avatar.startsWith('a_') ? 'gif' : 'png';
+                        document.getElementById('discord-avatar').src = `https://cdn.discordapp.com/avatars/${stdData.id}/${stdData.avatar}.${format}?size=256`;
+                    }
+                    document.getElementById('discord-bio').textContent = "public profile synchronized.";
+                }
+            } catch (error) {
+                console.error("Error fetching Discord profile:", error);
+                document.getElementById('discord-display').textContent = "User Not Found";
+                document.getElementById('discord-bio').textContent = "failed to connect to discord api.";
+            }
+        }
+
+        // Fetch profile immediately on load (so it's ready when they click enter)
+        fetchDiscordProfile();
+    </script>
+</body>
+</html>
